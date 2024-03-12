@@ -1,18 +1,16 @@
 # .bash_profile
 
-# Get the aliases and functions
-if [ -f ~/.bashrc ]; then
-        . ~/.bashrc
-fi
 echo " "
 echo "[CENTRAL CONTROL TESTS] Loading Environment..."
 
 source .setupEnv
 
-ACS_CDB_BKP=$ACS_CDB
 ACS_CDB=$TESTS_CDB
-TESTS_MANAGER=corbaloc::localhost:3${TESTS_BASEPORT}00/Manager
+MANAGER_REFERENCE=corbaloc::maacsss.mavpn.org:3${TESTS_BASEPORT}00/Manager
 ACS_INSTANCE=$TESTS_BASEPORT
+
+echo "Env variables: MANAGER_REFERENCE=${MANAGER_REFERENCE}"
+echo "Env variables: ACS_INSTANCE=${ACS_INSTANCE}"
 
 if [ ! -d logs ]; then
   mkdir -p logs;
@@ -21,15 +19,17 @@ fi
 echo " "
 echo "[CENTRAL CONTROL TESTS] Starting ACS manager in baseport ${TESTS_BASEPORT}..."
 nohup acsStart -b $TESTS_BASEPORT > logs/acsStart.log 2>&1 &
-ACS_CDB=$ACS_CDB_BKP
 sleep 25
+
+echo "Env variables: MANAGER_REFERENCE=${MANAGER_REFERENCE}"
+echo "Env variables: ACS_INSTANCE=${ACS_INSTANCE}"
 
 echo " "
 echo "[CENTRAL CONTROL TESTS] Starting Java & Python Containers..."
-nohup acsStartContainer -b ${TESTS_BASEPORT} -m ${TESTS_MANAGER} --java --name=centralControlJTestContainer > logs/centralControlJTestContainer.log 2>&1 &
-sleep 5
-nohup ACSStartContainerPy centralControlPTestContainer -managerReference ${TESTS_MANAGER} > logs/centralControlPTestContainer.log 2>&1 &
-sleep 5
+nohup acsStartContainer -b ${TESTS_BASEPORT} -m ${MANAGER_REFERENCE} --java --name=centralControlJTestContainer > logs/centralControlJTestContainer.log 2>&1 &
+sleep 8
+nohup ACSStartContainerPy centralControlPTestContainer -managerReference ${MANAGER_REFERENCE} > logs/centralControlPTestContainer.log 2>&1 &
+sleep 8
 
 echo " "
 echo "[CENTRAL CONTROL TESTS] Starting unitary tests..."
@@ -39,7 +39,7 @@ echo "**************************************************************************
 echo "******************************* CentralControlMasterTest **********************************"
 echo "*******************************************************************************************"
 echo "*******************************************************************************************"
-acsStartJava -b ${TESTS_BASEPORT} -m ${TESTS_MANAGER} org.junit.runner.JUnitCore astri.cc.CentralControlMasterTest.Tests
+acsStartJava -b ${TESTS_BASEPORT} -m ${MANAGER_REFERENCE} org.junit.runner.JUnitCore astri.cc.CentralControlMasterTest.Tests
 
 sleep 2
 
@@ -48,7 +48,7 @@ echo "**************************************************************************
 echo "********************************** ResourceManagerTest ************************************"
 echo "*******************************************************************************************"
 echo "*******************************************************************************************"
-acsStartJava -b ${TESTS_BASEPORT} -m ${TESTS_MANAGER} org.junit.runner.JUnitCore astri.cc.ResourceManagerTest.Tests
+acsStartJava -b ${TESTS_BASEPORT} -m ${MANAGER_REFERENCE} org.junit.runner.JUnitCore astri.cc.ResourceManagerTest.Tests
 
 sleep 2
 
@@ -57,7 +57,7 @@ echo "**************************************************************************
 echo "********************************** MasterControllerTest ***********************************"
 echo "*******************************************************************************************"
 echo "*******************************************************************************************"
-acsStartJava -b ${TESTS_BASEPORT} -m ${TESTS_MANAGER} org.junit.runner.JUnitCore astri.cc.MasterControllerTest.Tests
+acsStartJava -b ${TESTS_BASEPORT} -m ${MANAGER_REFERENCE} org.junit.runner.JUnitCore astri.cc.MasterControllerTest.Tests
 
 sleep 2
 
@@ -66,11 +66,14 @@ echo "**************************************************************************
 echo "****************************** TelescopeArrayControllerTest *******************************"
 echo "*******************************************************************************************"
 echo "*******************************************************************************************"
-acsStartJava -b ${TESTS_BASEPORT} -m ${TESTS_MANAGER} org.junit.runner.JUnitCore astri.cc.TelescopeArrayControllerTest.Tests
+acsStartJava -b ${TESTS_BASEPORT} -m ${MANAGER_REFERENCE} org.junit.runner.JUnitCore astri.cc.TelescopeArrayControllerTest.Tests
 
 sleep 2
 
 echo " "
 echo "[CENTRAL CONTROL TESTS] Stopping ACS manager in baseport ${TESTS_BASEPORT}..."
 
-nohup acsStop -b ${TESTS_BASEPORT} 2>&1 &
+echo "Env variables: MANAGER_REFERENCE=${MANAGER_REFERENCE}"
+echo "Env variables: ACS_INSTANCE=${ACS_INSTANCE}"
+
+acsStop -b ${TESTS_BASEPORT}
